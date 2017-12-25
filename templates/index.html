@@ -1,0 +1,80 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <meta http-equiv="refresh" content="30">
+  
+  <title>gaia</title>
+  
+  <link href="https://fonts.googleapis.com/css?family=Iceland" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Special+Elite" rel="stylesheet">
+  <link href='https://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
+  <link href='static/metricsgraphics.css' rel='stylesheet' type='text/css'>
+  <link href='static/metricsgraphics-demo-dark.css' rel='stylesheet' type='text/css'>
+  
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src='static/metricsgraphics.min.js'></script>
+ 
+  <style>
+    body {
+      background: black;
+      cursor: none;
+    }
+    .logo
+    {
+        font-family: 'Special Elite', cursive;
+        font-size:      100px;
+        text-indent: -010px;
+        color: black;
+      	filter: invert(100%);
+    }
+    img.logo {
+      vertical-align: middle;
+      margin-right: -15px;
+    }
+    p {
+      font-family: 'Special Elite', cursive;
+      text-indent: 20;
+      color: black;
+    	filter: invert(100%);
+    }
+  </style>
+</head>
+<body>
+  <table>
+    <tr>
+      <td>
+        <div class="logo">
+        <img class="logo" src="static/tree.png" height="80px">gaia:
+        </div>
+      </td>
+      <td>
+          <p>uptime: {{ uptime }}</p>
+      </td>
+    </tr>
+  </table>
+  <script src="https://fb.me/react-15.1.0.js"></script>
+  <script src="https://fb.me/react-dom-15.1.0.js"></script>
+  
+  <div id="chart" class="col-lg-7"></div>
+  <script>
+    d3.json('/sensor/1', function(data) {
+        data = MG.convert.date(data, 'timestamp', "%a, %d %b %Y %H:%M:%S");
+        MG.data_graphic({
+            title: "temperature",
+            area: false,
+            data: data,
+            min_y_from_data: true,
+            top: 30,
+            width: 600,
+            height: 150,
+            right: 40,
+            target: document.getElementById('chart'),
+            x_accessor: 'timestamp',
+            y_accessor: 'temp'
+        });
+    });
+  </script>
+</body>
+</html>
