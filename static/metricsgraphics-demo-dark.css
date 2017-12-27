@@ -186,6 +186,7 @@ li {
 .mg-chart-title {
     font-family: 'Iceland', cursive;
     fill: #cfcfcf;
+    text-align: left;
 }
 
 .mg-category-guides line {
