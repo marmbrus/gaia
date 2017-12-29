@@ -9,7 +9,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 inside = [
     #OneWireSensor("1", "28-0516a1891dff"),
     #OneWireSensor("2", "28-0516a1b966ff"),
-    TempHumidity("3", 23, 24),
+    TempHumidity("sht10", 23, 24),
     DHT22("dht", 27)
 ]
     
@@ -33,7 +33,7 @@ def init():
         
     get_scheduler().add_job(
         func=lambda: read_and_publish(inside, stores),
-        trigger=IntervalTrigger(minutes=1),
+        trigger=IntervalTrigger(seconds=60),
         id='inside',
         name='inside fetcher',
         replace_existing=True)

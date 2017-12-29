@@ -12,6 +12,9 @@ import Adafruit_DHT
 def get_timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    
+def c2f(c):
+    return c * 9/5 + 32
 
 class WeatherUnderground:
     def __init__(self, name, stationId):
@@ -44,7 +47,8 @@ class OneWireSensor:
         f.close()
         return {
             "sensor": self.name, 
-            "temp": float(temp) / 1000
+            "temperature_c": float(temp) / 1000,
+            "temperature_f": c2f(float(temp) / 1000),
         }
         
         
@@ -54,9 +58,11 @@ class TempHumidity:
         self.sht = Sht(data, clock, voltage="5V")
         
     def read(self):
+        temp = self.sht.read_t()
         return {
             "sensor": self.name, 
-            "temperature_c": self.sht.read_t(), 
+            "temperature_c": temp,
+            "temperature_f": c2f(temp),
             "humidity": self.sht.read_rh()
         }
         
@@ -69,5 +75,6 @@ class DHT22:
         return {
             "sensor": self.name,
             "humidity": humidity,
-            "temperature_c": temperature
+            "temperature_c": temperature,
+            "temperature_f": c2f(temperature)
         }

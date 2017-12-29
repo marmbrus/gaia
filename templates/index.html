@@ -79,10 +79,10 @@
   
   <div id="indoor-temp"></div>
   <script>
-    d3.json('/stream?sensors=3,dht', function(data) {
+    d3.json('/stream?sensors=sht10,dht', function(data) {
         data = MG.convert.date(data, 'timestamp', "%Y-%m-%d %H:%M:%S");
         var lines = [
-          data.filter(function(e) { return e["sensor"] == "3"}),
+          data.filter(function(e) { return e["sensor"] == "sht10"}),
           data.filter(function(e) { return e["sensor"] == "dht"})
         ];
         MG.data_graphic({
@@ -96,17 +96,17 @@
             right: 40,
             target: document.getElementById('indoor-temp'),
             x_accessor: 'timestamp',
-            y_accessor: 'temperature_c'
+            y_accessor: 'temperature_f'
         });
     });
   </script>
   
  <div id="indoor-humidity"></div>
   <script>
-    d3.json('/stream?sensors=3,dht', function(data) {
+    d3.json('/stream?sensors=sht10', function(data) {
         data = MG.convert.date(data, 'timestamp', "%Y-%m-%d %H:%M:%S");
         var lines = [
-          data.filter(function(e) { return e["sensor"] == "3"}),
+          data.filter(function(e) { return e["sensor"] == "sht10"}),
           data.filter(function(e) { return e["sensor"] == "dht"})
         ];
         MG.data_graphic({
