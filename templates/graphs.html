@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+{% for graph in graphs %}
+
+<div id="graph{{ loop.index0 }}"></div></div>
+<script type="text/javascript" charset="utf-8">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    d3.json('/stream?sensors={{ ",".join(graph["sensors"]) }}', function(data) {
+      data = MG.convert.date(data, 'timestamp', "%Y-%m-%d %H:%M:%S");
+      var lines = [
+        {% for s in graph["sensors"] %}
+           data.filter(function(e) { return e["sensor"] == "{{ s }}"}),
+        {% endfor %}
+      ];
+      var graph = {
+        title: "{{ graph["title"] }}",
+        area: false,
+        data: lines,
+        min_y_from_data: true,
+        top: 30,
+        width: 600,
+        height: 150,
+        right: 40,
+        target: document.getElementById('graph{{ loop.index0 }}'),
+        x_accessor: '{{ graph["x"] }}',
+        y_accessor: '{{ graph["y"] }}'
+        };
+      MG.data_graphic(graph);
+      
+      {% for s in graph["sensors"] %}
+      socket.on('sensor-{{ s }}', function(data){
+        data["timestamp"] = new Date(data["timestamp"])
+        graph["data"][0].push(data);
+        MG.data_graphic(graph);
+      });
+      {% endfor %}
+    })
+</script>
+{% endfor %}
+{% endblock %}

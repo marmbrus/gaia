@@ -1,6 +1,6 @@
 import atexit
-
-from sensors import get_timestamp
+import datetime
+import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -9,6 +9,10 @@ impl = BackgroundScheduler()
 impl.start()
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: impl.shutdown())
+
+def get_timestamp():
+    ts = time.time()
+    return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
 def get_scheduler():
     return impl

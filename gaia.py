@@ -1,16 +1,19 @@
 from localstore import *
-from web import app
+from web import app, socketio
 from scheduler import get_scheduler, read_and_publish
 from sensors import *
 from kafka import *
 
 from apscheduler.triggers.interval import IntervalTrigger
 
+from thread import start_new_thread
+
 inside = [
     #OneWireSensor("1", "28-0516a1891dff"),
     #OneWireSensor("2", "28-0516a1b966ff"),
-    TempHumidity("sht10", 23, 24),
-    DHT22("dht", 27)
+    #TempHumidity("sht10", 23, 24),
+    #DHT22("dht", 27),
+    #FakeSensor("fake1")
 ]
     
 outside = [
@@ -33,7 +36,7 @@ def init():
         
     get_scheduler().add_job(
         func=lambda: read_and_publish(inside, stores),
-        trigger=IntervalTrigger(seconds=60),
+        trigger=IntervalTrigger(seconds=10),
         id='inside',
         name='inside fetcher',
         replace_existing=True)
@@ -42,4 +45,5 @@ if __name__ == "__main__":
     read_and_publish(outside, stores)
     read_and_publish(inside , stores)
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony"]))
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)

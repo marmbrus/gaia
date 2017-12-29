@@ -9,12 +9,20 @@ import google
 from sht_sensor import Sht
 import Adafruit_DHT
 
+from random import random
+
 def get_timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
     
 def c2f(c):
     return c * 9/5 + 32
+
+class FakeSensor():
+    def __init__(self, name):
+        self.name = name
+    def read(self):
+        return {"sensor": self.name, "timestamp": get_timestamp(), "value": random()}
 
 class WeatherUnderground:
     def __init__(self, name, stationId):

@@ -7,9 +7,12 @@ from flask import render_template
 from flask import jsonify
 from flask import request
 
-from confluent_kafka import Consumer, KafkaError, TopicPartition
+from flask_socketio import SocketIO
+
+from kafka import dump_topics
 
 app = Flask("gaia-web")
+socketio = SocketIO(app)
 
 def uptime():
     with open('/proc/uptime', 'r') as f:
@@ -19,7 +22,21 @@ def uptime():
 @app.route("/")
 def index():
     # publish_reading()
-    return render_template('index.html', uptime=uptime())
+    graphs = [
+        {
+            "title": "outside temperature",
+            "sensors": ["balcony"],
+            "x": "timestamp",
+            "y": "temp_f"
+        },
+        {
+            "title": "outside humidity",
+            "sensors": ["balcony"],
+            "x": "timestamp",
+            "y": "relative_humidity"
+        },
+    ]
+    return render_template('graphs.html', uptime=uptime(), graphs=graphs)
 
 @app.route("/data")
 def data():
@@ -49,20 +66,5 @@ def stream():
     sensors = request.args.get('sensors', [])
     if sensors:
         sensors = sensors.split(",")
-    c = Consumer({'bootstrap.servers': 'localhost',
-                  'group.id': 'webrequest',
-                  'default.topic.config': {'auto.offset.reset': 'earliest'}})
-    messages = []
-    
-    for s in sensors:
-        partitions = [TopicPartition("sensor-" + s, 0, -2)]
-        c.assign(partitions)
-        running = True
-        while running:
-            msg = c.poll(timeout=100)
-            if msg:
-                messages.append(json.loads(msg.value().decode("utf8")))
-            else:
-                running = False
-    c.close()
-    return jsonify(messages)
+    data = dump_topics(sensors)
+    return jsonify(data)
