@@ -13,7 +13,7 @@ inside = [
     #OneWireSensor("2", "28-0516a1b966ff"),
     #TempHumidity("sht10", 23, 24),
     #DHT22("dht", 27),
-    #FakeSensor("fake1")
+    FakeSensor("fake1")
 ]
     
 outside = [
@@ -41,9 +41,11 @@ def init():
         name='inside fetcher',
         replace_existing=True)
 
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-fake1"]))
+
 if __name__ == "__main__":
+    logging.basicConfig(level="INFO")
     read_and_publish(outside, stores)
     read_and_publish(inside , stores)
 
-    start_new_thread(poll_topic, (socketio, ["sensor-balcony"]))
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)

@@ -20,9 +20,11 @@ def c2f(c):
 
 class FakeSensor():
     def __init__(self, name):
+        self.value = 10
         self.name = name
     def read(self):
-        return {"sensor": self.name, "timestamp": get_timestamp(), "value": random()}
+        self.value = self.value + random() - .5
+        return {"sensor": self.name, "timestamp": get_timestamp(), "value": self.value}
 
 class WeatherUnderground:
     def __init__(self, name, stationId):
@@ -38,6 +40,7 @@ class WeatherUnderground:
         r = requests.get(url)
         response = r.json()['current_observation']
         response["sensor"] = self.name
+        response["timestamp"] = response["observation_time_rfc822"]
         return response
 
 class OneWireSensor:

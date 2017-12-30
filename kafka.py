@@ -1,10 +1,12 @@
 import json
+import logging
 import time
 
 from confluent_kafka import Producer
 from confluent_kafka import Consumer, KafkaError, TopicPartition
 
 config = {'bootstrap.servers': 'localhost'}
+logger = logging.getLogger("kafka")
 
 class KafkaStore:
     def write(self, data):
@@ -40,5 +42,5 @@ def poll_topic(socket, topics):
         msg = c.poll(timeout=100)
         if msg:
             data = json.loads(msg.value().decode("utf8"))
-            print("emitting")
+            logger.info("Emitting to topic {topic}".format(topic=msg.topic()))
             socket.emit(msg.topic(), data)

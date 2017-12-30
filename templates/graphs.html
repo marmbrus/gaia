@@ -2,16 +2,21 @@
 
 {% block content %}
 
+<script type="text/javascript" charset="utf-8">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+</script>
+
 {% for graph in graphs %}
 
 <div id="graph{{ loop.index0 }}"></div></div>
 <script type="text/javascript" charset="utf-8">
-    var socket = io.connect('http://' + document.domain + ':' + location.port);
     d3.json('/stream?sensors={{ ",".join(graph["sensors"]) }}', function(data) {
-      data = MG.convert.date(data, 'timestamp', "%Y-%m-%d %H:%M:%S");
       var lines = [
         {% for s in graph["sensors"] %}
-           data.filter(function(e) { return e["sensor"] == "{{ s }}"}),
+           data.filter(function(e) { return e["sensor"] == "{{ s }}"}).map(function(e) {
+             e["{{ graph["x"] }}"] = new Date(e["{{ graph["x"] }}"])
+             return e
+           }),
         {% endfor %}
       ];
       var graph = {
@@ -28,10 +33,13 @@
         y_accessor: '{{ graph["y"] }}'
         };
       MG.data_graphic(graph);
-      
+
+      console.log("Graph initilized")
       {% for s in graph["sensors"] %}
+      console.log("set up polling for {{ s }}")
       socket.on('sensor-{{ s }}', function(data){
         data["timestamp"] = new Date(data["timestamp"])
+        console.log("Update from " + data["timestamp"])
         graph["data"][0].push(data);
         MG.data_graphic(graph);
       });

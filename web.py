@@ -30,10 +30,10 @@ def index():
             "y": "temp_f"
         },
         {
-            "title": "outside humidity",
-            "sensors": ["balcony"],
+            "title": "random data",
+            "sensors": ["fake1"],
             "x": "timestamp",
-            "y": "relative_humidity"
+            "y": "value"
         },
     ]
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
