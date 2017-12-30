@@ -21,7 +21,7 @@ def dump_topics(topics):
                   'default.topic.config': {'auto.offset.reset': 'earliest'}})
     messages = []
     for t in topics:
-        partitions = [TopicPartition("sensor-" + t, 0, -2)]
+        partitions = [TopicPartition(t, 0, -2)]
         c.assign(partitions)
         running = True
         while running:
@@ -42,5 +42,5 @@ def poll_topic(socket, topics):
         msg = c.poll(timeout=100)
         if msg:
             data = json.loads(msg.value().decode("utf8"))
-            logger.info("Emitting to topic {topic}".format(topic=msg.topic()))
+            logger.info("Emitting to {topic}".format(topic=msg.topic()))
             socket.emit(msg.topic(), data)

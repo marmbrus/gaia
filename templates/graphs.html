@@ -10,15 +10,22 @@
 
 <div id="graph{{ loop.index0 }}"></div></div>
 <script type="text/javascript" charset="utf-8">
-    d3.json('/stream?sensors={{ ",".join(graph["sensors"]) }}', function(data) {
-      var lines = [
-        {% for s in graph["sensors"] %}
-           data.filter(function(e) { return e["sensor"] == "{{ s }}"}).map(function(e) {
-             e["{{ graph["x"] }}"] = new Date(e["{{ graph["x"] }}"])
-             return e
-           }),
-        {% endfor %}
-      ];
+    d3.json('/stream?topics={{ ",".join(graph["data"]) }}', function(data) {
+      data = data.map(function(e) {
+        e["{{ graph["x"] }}"] = new Date(e["{{ graph["x"]}}"])
+        return e
+      })
+      
+      {% if graph["series"] %}
+      var groups = [...new Set(data.map(function(d) { return d["{{graph["series"]}}"]}))];
+      var lines = groups.map(function(g) {
+        return data.filter(function(d) { return d["{{graph["series"]}}"] == g})
+      })
+      {% else %}
+      var groups = [];
+      var lines = data
+      {% endif %}
+
       var graph = {
         title: "{{ graph["title"] }}",
         area: false,
@@ -35,12 +42,18 @@
       MG.data_graphic(graph);
 
       console.log("Graph initilized")
-      {% for s in graph["sensors"] %}
-      console.log("set up polling for {{ s }}")
-      socket.on('sensor-{{ s }}', function(data){
+      {% for t in graph["data"] %}
+      console.log("set up polling for {{ t }}")
+      socket.on('{{t}}', function(data){
+        {% if graph["series"] %}
+          var series = groups.indexOf(data["{{graph["series"]}}"])
+        {% else %}
+          var series = 0
+        {% endif %}
+        
         data["timestamp"] = new Date(data["timestamp"])
-        console.log("Update from " + data["timestamp"])
-        graph["data"][0].push(data);
+        console.log("Update from " + series + " " + data["timestamp"])
+        graph["data"][series].push(data);
         MG.data_graphic(graph);
       });
       {% endfor %}

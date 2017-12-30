@@ -13,7 +13,8 @@ inside = [
     #OneWireSensor("2", "28-0516a1b966ff"),
     #TempHumidity("sht10", 23, 24),
     #DHT22("dht", 27),
-    FakeSensor("fake1")
+    FakeSensor("fake1"),
+    FakeSensor("fake2"),
 ]
     
 outside = [
@@ -41,7 +42,7 @@ def init():
         name='inside fetcher',
         replace_existing=True)
 
-    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-fake1"]))
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-fake1", "sensor-fake2"]))
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")

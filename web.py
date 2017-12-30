@@ -25,46 +25,24 @@ def index():
     graphs = [
         {
             "title": "outside temperature",
-            "sensors": ["balcony"],
+            "data": ["sensor-balcony"],
             "x": "timestamp",
             "y": "temp_f"
         },
         {
             "title": "random data",
-            "sensors": ["fake1"],
+            "data": ["sensor-fake1", "sensor-fake2"],
+            "series": "sensor",
             "x": "timestamp",
             "y": "value"
         },
     ]
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
 
-@app.route("/data")
-def data():
-    sensors = request.args.get('sensors', [])
-    if sensors:
-        sensors = sensors.split(",")
-
-    output_data = []
-    files = ["/home/pi/gaia/data.json", "/home/pi/gaia/static/historical.json"]
-    for filePath in files:
-        with open(filePath, "r") as file:
-            for line in file.readlines():
-                try:
-                    data = json.loads(line)
-                    include = True
-                    if len(sensors) > 0:
-                        if data["sensor"] not in sensors:
-                            include = False
-                    if include:
-                        output_data.append(data)
-                except:
-                    print(line)
-    return jsonify(output_data)
-
 @app.route("/stream")
 def stream():
-    sensors = request.args.get('sensors', [])
-    if sensors:
-        sensors = sensors.split(",")
-    data = dump_topics(sensors)
+    topics = request.args.get('topics', [])
+    if topics:
+        topics = topics.split(",")
+    data = dump_topics(topics)
     return jsonify(data)
