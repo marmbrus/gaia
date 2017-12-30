@@ -1,4 +1,5 @@
 from datetime import timedelta
+import os
 import time
 import json
 
@@ -6,6 +7,7 @@ from flask import Flask
 from flask import render_template
 from flask import jsonify
 from flask import request
+from flask import send_from_directory
 
 from flask_socketio import SocketIO
 
@@ -14,6 +16,10 @@ from kafka import dump_topics
 app = Flask("gaia-web")
 socketio = SocketIO(app)
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 def uptime():
     with open('/proc/uptime', 'r') as f:
         uptime_seconds = float(f.readline().split()[0])
