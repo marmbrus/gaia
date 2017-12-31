@@ -10,7 +10,7 @@
 
 <div id="graph{{ loop.index0 }}"></div></div>
 <script type="text/javascript" charset="utf-8">
-    d3.json('/stream?topics={{ ",".join(graph["data"]) }}', function(data) {
+    d3.json('/stream?topics={{ ",".join(graph["data"]) }}&age={{ graph["age"] }}', function(data) {
       data = data.map(function(e) {
         e["{{ graph["x"] }}"] = new Date(e["{{ graph["x"]}}"])
         return e
@@ -37,7 +37,8 @@
         right: 40,
         target: document.getElementById('graph{{ loop.index0 }}'),
         x_accessor: '{{ graph["x"] }}',
-        y_accessor: '{{ graph["y"] }}'
+        y_accessor: '{{ graph["y"] }}',
+        transition_on_update: data.length < 100
         };
       MG.data_graphic(graph);
 
@@ -52,9 +53,10 @@
         {% endif %}
         
         data["timestamp"] = new Date(data["timestamp"])
-        console.log("Update from " + series + " " + data["timestamp"])
+        console.log("Update from {{ t }}:" + series + " " + data["timestamp"])
         graph["data"][series].push(data);
         MG.data_graphic(graph);
+        console.log("Update complete {{ t }}:" + series + " " + data["timestamp"])
       });
       {% endfor %}
     })

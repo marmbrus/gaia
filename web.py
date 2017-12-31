@@ -1,4 +1,8 @@
 from datetime import timedelta
+from datetime import datetime
+import parsedatetime
+import pytz
+
 import os
 import time
 import json
@@ -31,16 +35,23 @@ def index():
     graphs = [
         {
             "title": "outside temperature",
-            "data": ["sensor-balcony"],
+            "data": ["cleaned"],
             "x": "timestamp",
-            "y": "temp_f"
+            "y": "temp_f",
+        },
+        {
+            "title": "outside humidity",
+            "data": ["cleaned"],
+            "x": "timestamp",
+            "y": "relative_humidity",
         },
         {
             "title": "random data",
             "data": ["sensor-fake1", "sensor-fake2"],
             "series": "sensor",
             "x": "timestamp",
-            "y": "value"
+            "y": "value",
+            "age": "1 hour",
         },
     ]
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
@@ -50,5 +61,10 @@ def stream():
     topics = request.args.get('topics', [])
     if topics:
         topics = topics.split(",")
-    data = dump_topics(topics)
+    maxage = request.args.get('age', None)
+    if maxage:
+        diff = parsedatetime.Calendar().parseDT(maxage, sourceTime=datetime.min)[0] - datetime.min
+        maxage = datetime.now(pytz.timezone('US/Pacific')) - diff
+        print(maxage)
+    data = dump_topics(topics, maxage)
     return jsonify(data)

@@ -42,7 +42,7 @@ def init():
         name='inside fetcher',
         replace_existing=True)
 
-    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-fake1", "sensor-fake2"]))
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-fake1", "sensor-fake2", "cleaned"]))
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")

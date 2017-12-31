@@ -1,12 +1,17 @@
 import json
 import logging
 import time
+from dateutil.parser import parse
+
+from subprocess import call
+from os.path import expanduser
 
 from confluent_kafka import Producer
 from confluent_kafka import Consumer, KafkaError, TopicPartition
 
 config = {'bootstrap.servers': 'localhost'}
 logger = logging.getLogger("kafka")
+bindir = expanduser("~/confluent-4.0.0/bin")
 
 class KafkaStore:
     def write(self, data):
@@ -14,8 +19,12 @@ class KafkaStore:
         for record in data:
             p.produce("sensor-" + record["sensor"], json.dumps(record).encode('utf-8'))
         p.flush()
-    
-def dump_topics(topics):
+
+def delete_topic(topic):
+    ret = call(["{bin}/kafka-topics".format(bin=bindir), "--zookeeper",  "localhost", "--delete", "--topic", topic])
+    logger.warning(ret)
+
+def dump_topics(topics, maxage):
     c = Consumer({'bootstrap.servers': 'localhost',
                   'group.id': 'webrequest2',
                   'default.topic.config': {'auto.offset.reset': 'earliest'}})
@@ -27,7 +36,10 @@ def dump_topics(topics):
         while running:
             msg = c.poll(timeout=100)
             if msg:
-                messages.append(json.loads(msg.value().decode("utf8")))
+                data = json.loads(msg.value().decode("utf8"))
+                timestamp = parse(data["timestamp"], fuzzy=True)
+                if not maxage or maxage < timestamp:
+                    messages.append(data)
             else:
                 running = False
     c.close()
