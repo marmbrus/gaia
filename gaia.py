@@ -11,10 +11,10 @@ from thread import start_new_thread
 inside = [
     #OneWireSensor("1", "28-0516a1891dff"),
     #OneWireSensor("2", "28-0516a1b966ff"),
-    #TempHumidity("sht10", 23, 24),
-    #DHT22("dht", 27),
-    FakeSensor("fake1"),
-    FakeSensor("fake2"),
+    TempHumidity("sht10", 23, 24),
+    DHT22("dht", 27),
+    #FakeSensor("fake1"),
+    #FakeSensor("fake2"),
 ]
     
 outside = [
@@ -37,12 +37,12 @@ def init():
         
     get_scheduler().add_job(
         func=lambda: read_and_publish(inside, stores),
-        trigger=IntervalTrigger(seconds=10),
+        trigger=IntervalTrigger(seconds=30),
         id='inside',
         name='inside fetcher',
         replace_existing=True)
 
-    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-fake1", "sensor-fake2", "cleaned"]))
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-sht10", "sensor-dht"]))
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")

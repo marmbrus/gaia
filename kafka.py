@@ -37,8 +37,9 @@ def dump_topics(topics, maxage):
             msg = c.poll(timeout=100)
             if msg:
                 data = json.loads(msg.value().decode("utf8"))
-                timestamp = parse(data["timestamp"], fuzzy=True)
-                if not maxage or maxage < timestamp:
+                if "timestamp" not in data:
+                    "Skip"
+                elif not maxage or maxage < parse(data["timestamp"], fuzzy=True):
                     messages.append(data)
             else:
                 running = False

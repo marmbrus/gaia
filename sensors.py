@@ -53,11 +53,11 @@ class OneWireSensor:
         f = open(self.path, "r")
         lines = f.readlines()
         if lines[0][-4:] != "YES\n":
-            print(lines)
             return None
         temp = int(lines[1][-6:].strip())
         f.close()
         return {
+            "timestamp": get_timestamp(),
             "sensor": self.name, 
             "temperature_c": float(temp) / 1000,
             "temperature_f": c2f(float(temp) / 1000),
@@ -72,6 +72,7 @@ class TempHumidity:
     def read(self):
         temp = self.sht.read_t()
         return {
+            "timestamp": get_timestamp(),
             "sensor": self.name, 
             "temperature_c": temp,
             "temperature_f": c2f(temp),
@@ -85,6 +86,7 @@ class DHT22:
     def read(self):
         humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, 27)
         return {
+            "timestamp": get_timestamp(),
             "sensor": self.name,
             "humidity": humidity,
             "temperature_c": temperature,

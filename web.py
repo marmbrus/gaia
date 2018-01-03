@@ -35,23 +35,26 @@ def index():
     graphs = [
         {
             "title": "outside temperature",
-            "data": ["cleaned"],
+            "data": ["sensor-balcony"],
             "x": "timestamp",
             "y": "temp_f",
+            "age": "1 day"
         },
         {
-            "title": "outside humidity",
-            "data": ["cleaned"],
-            "x": "timestamp",
-            "y": "relative_humidity",
-        },
-        {
-            "title": "random data",
-            "data": ["sensor-fake1", "sensor-fake2"],
+            "title": "inside temperature",
+            "data": ["sensor-sht10", "sensor-dht"],
             "series": "sensor",
             "x": "timestamp",
-            "y": "value",
-            "age": "1 hour",
+            "y": "temperature_f",
+            "age": "1 hour"
+        },
+        {
+            "title": "inside humidity",
+            "data": ["sensor-sht10"],
+            "series": "sensor",
+            "x": "timestamp",
+            "y": "humidity",
+            "age": "1 hour"
         },
     ]
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
@@ -65,6 +68,5 @@ def stream():
     if maxage:
         diff = parsedatetime.Calendar().parseDT(maxage, sourceTime=datetime.min)[0] - datetime.min
         maxage = datetime.now(pytz.timezone('US/Pacific')) - diff
-        print(maxage)
     data = dump_topics(topics, maxage)
     return jsonify(data)
