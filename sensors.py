@@ -14,7 +14,7 @@ from random import random
 
 def get_timestamp():
     ts = time.time()
-    return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S -0800')
+    return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S -0000')
     
 def c2f(c):
     return c * 9/5 + 32

@@ -1,6 +1,6 @@
 sudo apt-get -y install net-tools vim git nodejs build-essential python-pip librdkafka-dev openjdk-8-jdk
 
-pip install flask flask-socketio confluent_kafka requests httplib2 oauth2client google-api-python-client apscheduler sht-sensor parsedatetime python-dateutil pytz
+pip install flask flask-socketio confluent_kafka requests httplib2 oauth2client google-api-python-client apscheduler sht-sensor parsedatetime python-dateutil pytz pip install nodemcu-uploader
 
 if [ ! -d $HOME/core ]
 then

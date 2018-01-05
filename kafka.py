@@ -19,6 +19,8 @@ class KafkaStore:
         for record in data:
             p.produce("sensor-" + record["sensor"], json.dumps(record).encode('utf-8'))
         p.flush()
+        
+kafkaStore = KafkaStore()
 
 def delete_topic(topic):
     ret = call(["{bin}/kafka-topics".format(bin=bindir), "--zookeeper",  "localhost", "--delete", "--topic", topic])

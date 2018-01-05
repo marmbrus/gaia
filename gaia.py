@@ -18,12 +18,12 @@ inside = [
 ]
     
 outside = [
-    WeatherUnderground("balcony", "pws:KCABERKE86"),
+#    WeatherUnderground("balcony", "pws:KCABERKE86"),
 ]
 
 stores = [
     LocalStore("data.json"),
-    KafkaStore()
+    kafkaStore
 ]
 
 @app.before_first_request
@@ -42,7 +42,7 @@ def init():
         name='inside fetcher',
         replace_existing=True)
 
-    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-sht10", "sensor-dht"]))
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-sht10", "sensor-dht", "sensor-40255102185161225227", "sensor-4025529137161225182"]))
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
