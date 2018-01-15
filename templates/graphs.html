@@ -33,12 +33,12 @@
         min_y_from_data: true,
         top: 30,
         width: 600,
-        height: 150,
+        height: 250,
         right: 40,
         target: document.getElementById('graph{{ loop.index0 }}'),
         x_accessor: '{{ graph["x"] }}',
         y_accessor: '{{ graph["y"] }}',
-        transition_on_update: data.length < 100
+        transition_on_update: data.length < 100,
         };
       MG.data_graphic(graph);
 

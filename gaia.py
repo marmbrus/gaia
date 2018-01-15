@@ -18,7 +18,7 @@ inside = [
 ]
     
 outside = [
-#    WeatherUnderground("balcony", "pws:KCABERKE86"),
+    WeatherUnderground("balcony", "pws:KCABERKE86"),
 ]
 
 stores = [
@@ -37,12 +37,12 @@ def init():
         
     get_scheduler().add_job(
         func=lambda: read_and_publish(inside, stores),
-        trigger=IntervalTrigger(seconds=30),
+        trigger=IntervalTrigger(minutes=5),
         id='inside',
         name='inside fetcher',
         replace_existing=True)
 
-    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-sht10", "sensor-dht", "sensor-40255102185161225227", "sensor-4025529137161225182"]))
+    start_new_thread(poll_topic, (socketio, ["sensor-balcony", "sensor-sht10", "sensor-dht", "sensor-40255102185161225227", "sensor-4025529137161225182", "sensor-weight"]))
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")

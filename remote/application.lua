@@ -57,4 +57,4 @@ function read ()
         end,{})
 end
 
-cron.schedule("* * * * *", read)
+cron.schedule("*/5 * * * *", read)

@@ -39,19 +39,12 @@ def uptime():
 def index():
     graphs = [
         {
-            "title": "outside temperature",
-            "data": ["sensor-balcony"],
-            "x": "timestamp",
-            "y": "temp_f",
-            "age": "1 day"
-        },
-        {
             "title": "inside temperature",
             "data": ["sensor-sht10", "sensor-dht", "sensor-40255102185161225227", "sensor-4025529137161225182"],
             "series": "sensor",
             "x": "timestamp",
             "y": "temperature_f",
-            "age": "1 hour"
+            "age": "24 hours",
         },
         {
             "title": "inside humidity",
@@ -59,15 +52,15 @@ def index():
             "series": "sensor",
             "x": "timestamp",
             "y": "humidity",
-            "age": "1 hour"
+            "age": "24 hours",
         },
-        
         {
-            "title": "light",
-            "data": ["sensor-tsl2561"],
+            "title": "weight",
+            "data": ["sensor-weight"],
+            "series": "sensor",
             "x": "timestamp",
-            "y": "lux",
-            "age": "1 hour"
+            "y": "weight",
+            "age": "24 hours",
         },
     ]
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
@@ -94,7 +87,7 @@ def record():
     ts = content["sec"] + content["usec"] / 1000000
     content["timestamp"] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S -0000')
     content["sensor"] = content["sensor"].replace(":", "")
-    if "temperature_f" in content:
+    if "temperature_c" in content:
         content["temperature_f"] = c2f(content["temperature_c"])
     logger.info("PUT: {content}".format(content=content))
     kafkaStore.write([content])
