@@ -12,7 +12,7 @@ inside = [
     #OneWireSensor("1", "28-0516a1891dff"),
     #OneWireSensor("2", "28-0516a1b966ff"),
     TempHumidity("sht10", 23, 24),
-    DHT22("dht", 27),
+#    DHT22("dht", 27),
     #FakeSensor("fake1"),
     #FakeSensor("fake2"),
 ]

@@ -1,5 +1,9 @@
 dofile("credentials.lua")
 
+local status_pin = 0
+gpio.mode(status_pin, gpio.OUTPUT)
+gpio.write(status_pin, gpio.LOW)
+
 function startup()
     if file.open("init.lua") == nil then
         print("init.lua deleted or renamed")
@@ -33,8 +37,9 @@ wifi_disconnect_event = function(T)
     return 
   end
   -- total_tries: how many times the station will attempt to connect to the AP. Should consider AP reboot duration.
-  local total_tries = 75
+  local total_tries = 10
   print("\nWiFi connection to AP("..T.SSID..") has failed!")
+  gpio.write(status_pin, gpio.HIGH)
 
   --There are many possible disconnect reasons, the following iterates through 
   --the list and returns the string corresponding to the disconnect reason.
@@ -52,9 +57,11 @@ wifi_disconnect_event = function(T)
   end
   if disconnect_ct < total_tries then 
     print("Retrying connection...(attempt "..(disconnect_ct+1).." of "..total_tries..")")
+    gpio.write(status_pin, gpio.LOW)
   else
     wifi.sta.disconnect()
     print("Aborting connection to AP!")
+    gpio.write(status_pin, gpio.LOW)
     disconnect_ct = nil  
   end
 end

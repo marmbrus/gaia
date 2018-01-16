@@ -1,5 +1,13 @@
-local ow_pin = 1
-ds18b20.setup(ow_pin)
+local ow_pin = -1
+local dht_pin = 1
+local status_pin = 0
+
+gpio.mode(status_pin, gpio.OUTPUT)
+gpio.write(status_pin, gpio.HIGH)
+
+if ow_pin ~= -1 then
+  ds18b20.setup(ow_pin)
+end
 
 sntp.sync(nil,
   function(sec, usec, server, info)
@@ -16,15 +24,20 @@ function record (r)
   r["usec"] = usec
   enc = sjson.encoder(r)
   data = enc:read()
+  print(data)
   sig = crypto.toHex(crypto.hmac("sha1", data, SK))
+  
+  gpio.write(status_pin, gpio.LOW)
+  
   http.put(
-    'http://192.168.1.64:5000/record',
+    URL,
     'Content-Type: application/json\r\nAuthorization: '..sig..'\r\n',
     data,
     function(code, data)
       if (code < 0) then
         print("HTTP request failed")
       else
+        gpio.write(status_pin, gpio.HIGH)
         print(code, data)
       end
     end)
@@ -41,20 +54,30 @@ function read ()
       a["broad"] = broad
       a["ir"] = ir
       record(a)
-      print("Illuminance: "..lux.." lx") 
+  end
+  
+  if dht_pin ~= -1 then
+    status, temp, humi, temp_dec, humi_dec = dht.read(dht_pin)
+    a = {}
+    a["sensor"] = wifi.sta.getmac().."-dht"
+    a["temperature_c"] = temp
+    a["humidity"] = humi
+    record(a)
   end
     
+  if ow_pin ~= -1 then
     ds18b20.read(
         function(ind,rom,res,temp,tdec,par)
-            print(temp)
-            a = {}
-            a["sensor"] = rom
-            a["res"] = res
-            a["temperature_c"] = temp
-            a["tdesc"] = tdec
-            a["par"] = par
-            record(a)
+          print(temp)
+          a = {}
+          a["sensor"] = rom
+          a["res"] = res
+          a["temperature_c"] = temp
+          a["tdesc"] = tdec
+          a["par"] = par
+          record(a)
         end,{})
+  end
 end
 
-cron.schedule("*/5 * * * *", read)
+cron.schedule("* * * * *", read)
