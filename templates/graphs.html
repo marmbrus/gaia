@@ -56,9 +56,13 @@
         
         data["timestamp"] = new Date(data["timestamp"])
         console.log("Update from {{ t }}:" + series + " " + data["timestamp"])
-        graph["data"][series].push(data);
+        series = graph["data"][series]
+        if (series[series.length - 1]["timestamp"] == data["timestamp"]) {
+          series.pop()
+        }
+        
+        series.push(data);
         MG.data_graphic(graph);
-        console.log("Update complete {{ t }}:" + series + " " + data["timestamp"])
       });
       {% endfor %}
     })

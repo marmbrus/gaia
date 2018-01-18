@@ -22,6 +22,10 @@ class KafkaStore:
         
 kafkaStore = KafkaStore()
 
+def compact_topic(topic):
+    ret = call(["{bin}/kafka-topics".format(bin=bindir), "--zookeeper", "localhost:2181", "--alter", "--topic", topic, "--config", "cleanup.policy=compact"])
+    logger.warning(ret)
+
 def delete_topic(topic):
     ret = call(["{bin}/kafka-topics".format(bin=bindir), "--zookeeper",  "localhost", "--delete", "--topic", topic])
     logger.warning(ret)

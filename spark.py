@@ -1,4 +1,5 @@
 import os
+import time
 
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
@@ -14,13 +15,26 @@ spark = SparkSession\
 spark.sql("SET spark.sql.shuffle.partitions=1")
 
 def topic(t):
-    return spark.readStream \
-        .format("org.apache.spark.sql.kafka010.KafkaSourceProvider") \
-        .option("kafka.bootstrap.servers", "localhost:9092") \
-        .option("subscribe", t) \
-        .option("startingOffsets", "earliest") \
+    schema = (
+        StructType() 
+            .add("timestamp", StringType())
+            .add("sensor", StringType())
+            .add("relative_humidity", StringType())
+            .add("temperature_f", DoubleType())
+            .add("weight", DoubleType())
+        )
+    return (spark.readStream
+        .format("org.apache.spark.sql.kafka010.KafkaSourceProvider")
+        .option("kafka.bootstrap.servers", "localhost:9092")
+        .option("subscribe", t)
+        .option("startingOffsets", "earliest")
         .load()
-
+        .select(from_json(col("value").cast("string"), schema).alias("json")) 
+        .selectExpr("json.*") 
+        .withColumn("timestamp", to_timestamp(col("timestamp"), "yyyy-MM-dd HH:mm:ss"))
+        .withWatermark("timestamp", "10 minutes")
+    )
+    
 def stream(name):
     def stream_dec(func):
         df = func()
@@ -29,36 +43,36 @@ def stream(name):
         # This is a new stream, clear out kafka.
         if not os.path.exists(checkpoint):
             delete_topic(name)
+
+        time.sleep(10)
         
-        df.writeStream \
+        df.withColumn("timestamp", date_format("timestamp", "yyyy-MM-dd HH:mm:ss Z")) \
+          .select(to_json(struct(col("*"))).alias("value")) \
+          .writeStream \
           .format("org.apache.spark.sql.kafka010.KafkaSourceProvider") \
           .option("kafka.bootstrap.servers", "localhost:9092") \
           .option("topic", name) \
           .option("checkpointLocation", checkpoint) \
+          .outputMode("update") \
           .start()
         return func
     return stream_dec
-    
-@stream("historical")
-def balcony_historical():
-    return topic("sensor-balcony")
-    
-@stream("cleaned")
-def cleaned():
-    strip_percent = udf(lambda x: x[:-1])
-    schema = (
-        StructType() 
-            .add("timestamp", StringType())
-            .add("relative_humidity", StringType())
-            .add("temp_f", DoubleType())
-        )
+
+@stream("weights")
+def weights():
     return (
-        topic("sensor-balcony") 
-            .select(from_json(col("value").cast("string"), schema).alias("json")) 
-            .selectExpr("json.*") 
-            .withColumn("relative_humidity", strip_percent(col("relative_humidity")).cast("double"))
-            .dropDuplicates(["timestamp"])
-            .select(to_json(struct(col("*"))).alias("value"))
+        topic("sensor-weight") 
+            .withColumn("weight", col("weight") - 1270)
+            .groupBy(window(col("timestamp"), "10 minutes").getField("start").alias("timestamp"))
+            .agg(avg(col("weight")).alias("weight"))
+        )
+
+@stream("temperatures")
+def temperatures():
+    return (
+        topic("sensor-40255102185161225227").union(topic("sensor-4025529137161225182")).union(topic("sensor-sht10"))
+            .groupBy(window(col("timestamp"), "10 minutes").getField("start").alias("timestamp"), col("sensor"))
+            .agg(avg(col("temperature_f")).alias("temperature_f"))
         )
 
 spark.streams.awaitAnyTermination()
