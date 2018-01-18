@@ -1,6 +1,11 @@
-local ow_pin = -1
-local dht_pin = 1
+dofile("version.lua")
+
+local ow_pin = 1
+local dht_pin = -1
 local status_pin = 0
+
+local lux_sda = -1
+local lux_scl = -1
 
 gpio.mode(status_pin, gpio.OUTPUT)
 gpio.write(status_pin, gpio.HIGH)
@@ -22,6 +27,7 @@ function record (r)
   sec, usec, rate = rtctime.get()
   r["sec"] = sec
   r["usec"] = usec
+  r["git_hash"] = VERSION
   enc = sjson.encoder(r)
   data = enc:read()
   print(data)
@@ -44,16 +50,18 @@ function record (r)
 end
 
 function read ()
-  status = tsl2561.init(5, 6, tsl2561.ADDRESS_FLOAT, tsl2561.PACKAGE_T_FN_CL)
-  if status == tsl2561.TSL2561_OK then
-      lux = tsl2561.getlux()
-      broad, ir = tsl2561.getrawchannels()
-      a = {}
-      a["sensor"] = "tsl2561"
-      a["lux"] = lux
-      a["broad"] = broad
-      a["ir"] = ir
-      record(a)
+  if lux_sda ~= -1 then
+    status = tsl2561.init(5, 6, tsl2561.ADDRESS_FLOAT, tsl2561.PACKAGE_T_FN_CL)
+    if status == tsl2561.TSL2561_OK then
+        lux = tsl2561.getlux()
+        broad, ir = tsl2561.getrawchannels()
+        a = {}
+        a["sensor"] = "tsl2561"
+        a["lux"] = lux
+        a["broad"] = broad
+        a["ir"] = ir
+        record(a)
+    end
   end
   
   if dht_pin ~= -1 then

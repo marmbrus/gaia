@@ -1,0 +1,1 @@
+adc cron crypto dht ds18b20 file gpio http hx711 i2c net node ow pwm rtctime sjson sntp spi tcs34725 tmr tsl2561 uart wifi
