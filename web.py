@@ -19,8 +19,12 @@ from flask import Response
 
 from flask_socketio import SocketIO
 
-from kafka import dump_topics, kafkaStore
+from kafka import dump_topics, kafkaStore, poll_topic
 from sensors import c2f
+
+from sets import Set
+from thread import start_new_thread
+
 
 app = Flask("gaia-web")
 socketio = SocketIO(app)
@@ -37,39 +41,24 @@ def uptime():
 
 @app.route("/")
 def index():
-    graphs = [
-        {
-            "title": "inside temperature",
-            "data": ["sensor-sht10", "sensor-dht", "sensor-40255102185161225227", "sensor-4025529137161225182"],
-            "series": "sensor",
-            "x": "timestamp",
-            "y": "temperature_f",
-            "age": "24 hours",
-        },
-        {
-            "title": "inside humidity",
-            "data": ["sensor-sht10"],
-            "series": "sensor",
-            "x": "timestamp",
-            "y": "humidity",
-            "age": "24 hours",
-        },
-        {
-            "title": "weight",
-            "data": ["sensor-weight"],
-            "series": "sensor",
-            "x": "timestamp",
-            "y": "weight",
-            "age": "24 hours",
-        },
-    ]
+    graphs = []
+    with open('graphs.json') as json_data:
+        graphs = json.load(json_data)
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
+
+listeners = Set()
 
 @app.route("/stream")
 def stream():
     topics = request.args.get('topics', [])
     if topics:
         topics = topics.split(",")
+        
+    for t in topics:
+        if t not in listeners:
+            listeners.add(t)
+            start_new_thread(poll_topic, (socketio, [t]))
+    
     maxage = request.args.get('age', None)
     if maxage:
         diff = parsedatetime.Calendar().parseDT(maxage, sourceTime=datetime.min)[0] - datetime.min
@@ -84,8 +73,9 @@ def record():
     expected = hmac.new("G414asl2%3d", request.data, hashlib.sha1).hexdigest()
     if auth != expected:
         return Response('Invalid Authorization Header', 401)
-    ts = content["sec"] + content["usec"] / 1000000
-    content["timestamp"] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S -0000')
+    if "sec" in content:
+        ts = content["sec"] + content["usec"] / 1000000
+        content["timestamp"] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S -0000')
     content["sensor"] = content["sensor"].replace(":", "")
     if "temperature_c" in content:
         content["temperature_f"] = c2f(content["temperature_c"])
