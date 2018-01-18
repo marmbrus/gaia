@@ -12,12 +12,35 @@ import Adafruit_DHT
 
 from random import random
 
+import serial
+
 def get_timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S -0000')
     
 def c2f(c):
     return c * 9/5 + 32
+
+class OpenScale():
+    def __init__(self, port):
+        self.port = port
+        self.ser = serial.Serial(port, 9600, timeout=1)
+
+    def read(self):
+        reading = None
+        while reading == None:
+            self.ser.write(b'0')
+            self.ser.flush()
+            line = self.ser.readline()
+            parts = line.split(",")
+            if len(parts) > 1:
+                reading = {
+                    "timestamp": get_timestamp(),
+                    "sensor": "weight",
+                    "weight": (float(parts[0]) + (1.27 - -39.75 - 0.25)) * 1000 + 1.6
+                }
+        print reading
+        return reading
 
 class FakeSensor():
     def __init__(self, name):
