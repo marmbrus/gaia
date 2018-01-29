@@ -16,7 +16,7 @@ sensors = [
 #    DHT22("dht", 27),
     #FakeSensor("fake1"),
     #FakeSensor("fake2"),
-    OpenScale('/dev/ttyUSB0')
+    OpenScale('/dev/ttyUSB1')
 ]
 
 if __name__ == "__main__":
@@ -26,12 +26,15 @@ if __name__ == "__main__":
     while True:
         readings = []
         for s in sensors:
-            reading = s.read()
-            logger.info("{sensor} returned reading {reading}".format(sensor=reading["sensor"], reading=str(reading)[0:20]))
-            serialized = json.dumps(reading)
-            auth = hmac.new("G414asl2%3d", serialized, hashlib.sha1).hexdigest()
-            headers = {'Content-type': 'application/json', 'Authorization': auth}
-            r = requests.put("http://gaia.bio/record", data=serialized, headers=headers)
-            print(r.status_code)
-        time.sleep(1000)
+            try:
+                reading = s.read()
+                logger.info("{sensor} returned reading {reading}".format(sensor=reading["sensor"], reading=str(reading)[0:20]))
+                serialized = json.dumps(reading)
+                auth = hmac.new("G414asl2%3d", serialized, hashlib.sha1).hexdigest()
+                headers = {'Content-type': 'application/json', 'Authorization': auth}
+                r = requests.put("http://gaia.bio/record", data=serialized, headers=headers)
+                print(r.status_code)
+            except:
+                print("error")
+        time.sleep(60)
     

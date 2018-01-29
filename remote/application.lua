@@ -1,17 +1,28 @@
 dofile("version.lua")
 
-local ow_pin = 1
+local ow_pin = -1
 local dht_pin = -1
 local status_pin = 0
 
 local lux_sda = -1
 local lux_scl = -1
 
+local color_sda = 3
+local color_scl = 4
+
+
 gpio.mode(status_pin, gpio.OUTPUT)
 gpio.write(status_pin, gpio.HIGH)
 
 if ow_pin ~= -1 then
   ds18b20.setup(ow_pin)
+end
+
+if color_sda ~= -1 then
+  i2c.setup(0, color_sda, color_scl, i2c.SLOW)
+  tcs34725.enable(function()
+    print("TCS34275 Enabled")
+  end)
 end
 
 sntp.sync(nil,
@@ -72,7 +83,18 @@ function read ()
     a["humidity"] = humi
     record(a)
   end
-    
+  
+  if color_sda ~= -1 then
+    clear,red,green,blue=tcs34725.raw()
+    a = {}
+    a["sensor"] = wifi.sta.getmac().."-rbg"
+    a["clear"] = clear
+    a["red"] = red
+    a["green"] = green
+    a["blue"] = blue
+    record(a)
+  end
+  
   if ow_pin ~= -1 then
     ds18b20.read(
         function(ind,rom,res,temp,tdec,par)
