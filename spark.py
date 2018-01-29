@@ -70,7 +70,18 @@ def weights():
 @stream("temperatures")
 def temperatures():
     return (
-        topic("sensor-40255102185161225227").union(topic("sensor-4025529137161225182")).union(topic("sensor-sht10"))
+        topic("sensor-40255102185161225227")
+            .union(topic("sensor-4025529137161225182"))
+            .union(topic("sensor-sht10"))
+            .union(topic("sensor-6001947448b8-dht"))
+            .union(topic("sensor-60019474508f-dht"))
+        )
+        
+@stream("temperatures-10min")
+def temperatures():
+    return (
+        temperatures()
+            .where(col("temperature_f") > 0)
             .groupBy(window(col("timestamp"), "10 minutes").getField("start").alias("timestamp"), col("sensor"))
             .agg(avg(col("temperature_f")).alias("temperature_f"))
         )

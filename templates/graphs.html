@@ -40,6 +40,7 @@
         target: document.getElementById('graph{{ loop.index0 }}'),
         x_accessor: '{{ graph["x"] }}',
         y_accessor: '{{ graph["y"] }}',
+        legend: groups,
         transition_on_update: data.length < 100,
         };
       MG.data_graphic(graph);
