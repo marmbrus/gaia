@@ -21,7 +21,7 @@ def topic(t):
             .add("sensor", StringType())
             .add("relative_humidity", StringType())
             .add("temperature_f", DoubleType())
-            .add("weight", DoubleType())
+            .add("grams", DoubleType())
         )
     return (spark.readStream
         .format("org.apache.spark.sql.kafka010.KafkaSourceProvider")
@@ -35,7 +35,7 @@ def topic(t):
         .withWatermark("timestamp", "10 minutes")
     )
     
-def stream(name):
+def stream(name, values, keys = []):
     def stream_dec(func):
         df = func()
         checkpoint = os.path.expanduser("~/checkpoints/{name}".format(name=name))
@@ -43,6 +43,7 @@ def stream(name):
         # This is a new stream, clear out kafka.
         if not os.path.exists(checkpoint):
             delete_topic(name)
+            delete_topic(name + "-10min")
 
         time.sleep(10)
         
@@ -55,19 +56,36 @@ def stream(name):
           .option("checkpointLocation", checkpoint) \
           .outputMode("update") \
           .start()
+          
+        grouping_keys = [col(k) for k in keys]
+        aggs = [avg(col(v)).alias(v) for v in values]
+        grouping = [window(col("timestamp"), "10 minutes").getField("start").alias("timestamp")] + grouping_keys
+        
+        df.groupBy(*grouping) \
+          .agg(*aggs) \
+          .withColumn("timestamp", date_format("timestamp", "yyyy-MM-dd HH:mm:ss Z")) \
+          .select(to_json(struct(col("*"))).alias("value")) \
+          .writeStream \
+          .format("org.apache.spark.sql.kafka010.KafkaSourceProvider") \
+          .option("kafka.bootstrap.servers", "localhost:9092") \
+          .option("topic", name + "-10min") \
+          .option("checkpointLocation", checkpoint + "-10min") \
+          .outputMode("update") \
+          .start()
+        
         return func
     return stream_dec
 
-@stream("weights")
+@stream("weights", values=["grams"])
 def weights():
     return (
-        topic("sensor-weight") 
-            .withColumn("weight", col("weight") - 1270)
-            .groupBy(window(col("timestamp"), "10 minutes").getField("start").alias("timestamp"))
-            .agg(avg(col("weight")).alias("weight"))
+        topic("sensor-600194744352-weight")
+            .where("grams < 1335")
+            .withColumn("grams", col("grams") - 1175)
+            .where("grams > 0")
         )
 
-@stream("temperatures")
+@stream("temperatures", keys = ["sensor"], values = ["temperature_f"])
 def temperatures():
     return (
         topic("sensor-40255102185161225227")
@@ -75,15 +93,7 @@ def temperatures():
             .union(topic("sensor-sht10"))
             .union(topic("sensor-6001947448b8-dht"))
             .union(topic("sensor-60019474508f-dht"))
-        )
-        
-@stream("temperatures-10min")
-def temperatures():
-    return (
-        temperatures()
-            .where(col("temperature_f") > 0)
-            .groupBy(window(col("timestamp"), "10 minutes").getField("start").alias("timestamp"), col("sensor"))
-            .agg(avg(col("temperature_f")).alias("temperature_f"))
+            # .union(topic("sensor-6001947450b7-dht")) # remote
         )
 
 spark.streams.awaitAnyTermination()
