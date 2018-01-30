@@ -1,15 +1,17 @@
 dofile("version.lua")
 
 local ow_pin = -1
-local dht_pin = -1
+local dht_pin = 1
 local status_pin = 0
 
 local lux_sda = -1
 local lux_scl = -1
 
-local color_sda = 3
-local color_scl = 4
+local color_sda = -1
+local color_scl = -1
 
+local weight_clk= -1
+local weight_dt= -1
 
 gpio.mode(status_pin, gpio.OUTPUT)
 gpio.write(status_pin, gpio.HIGH)
@@ -23,6 +25,10 @@ if color_sda ~= -1 then
   tcs34725.enable(function()
     print("TCS34275 Enabled")
   end)
+end
+
+if weight_clk ~= -1 then
+  hx711.init(weight_clk, weight_dt)
 end
 
 sntp.sync(nil,
@@ -92,6 +98,19 @@ function read ()
     a["red"] = red
     a["green"] = green
     a["blue"] = blue
+    record(a)
+  end
+  
+  if weight_clk ~= -1 then
+    raw = 0
+    for i=1,10 do 
+      raw = raw + hx711.read() 
+    end
+    raw = raw / 10
+    a = {}
+    a["sensor"] = wifi.sta.getmac().."-weight"
+    a["raw"] = raw
+    a["grams"] = -0.002274989854*(raw+69177.6)
     record(a)
   end
   
