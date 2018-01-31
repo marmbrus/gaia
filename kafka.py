@@ -34,7 +34,8 @@ def dump_topics(topics, maxage):
     c = Consumer({'bootstrap.servers': 'localhost',
                   'group.id': 'webrequest2',
                   'default.topic.config': {'auto.offset.reset': 'earliest'}})
-    messages = []
+    messages = {}
+    noDedup = []
     for t in topics:
         partitions = [TopicPartition(t, 0, -2)]
         c.assign(partitions)
@@ -46,11 +47,16 @@ def dump_topics(topics, maxage):
                 if "timestamp" not in data:
                     "Skip"
                 elif not maxage or maxage < parse(data["timestamp"], fuzzy=True):
-                    messages.append(data)
+                    key = msg.key()
+                    if key:
+                        data["key"] = key.decode("utf8")
+                        messages[key] = data
+                    else:
+                        noDedup.append(data)
             else:
                 running = False
     c.close()
-    return messages
+    return messages.values() + noDedup
     
 def poll_topic(socket, topics):
     c = Consumer({'bootstrap.servers': 'localhost',

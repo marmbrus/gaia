@@ -44,6 +44,18 @@ def index():
     graphs = []
     with open('graphs.json') as json_data:
         graphs = json.load(json_data)
+    for graph in graphs:
+        graph["title"] = graph["title"]
+        graph["age"] = "2 hours"
+
+    for graph in graphs[:]:
+        print(graph)
+        windowed = graph.copy()
+        windowed["title"] = graph["title"] + " - 3 days"
+        windowed["age"] = "3 days"
+        windowed["data"] = [d + "-10min" for d in windowed["data"]]
+        graphs.append(windowed)
+        
     return render_template('graphs.html', uptime=uptime(), graphs=graphs)
 
 listeners = Set()
