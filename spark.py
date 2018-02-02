@@ -5,7 +5,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
 
-from kafka import delete_topic, compact_topic
+from kafka_lib import delete_topic, compact_topic
 
 spark = SparkSession\
     .builder\
@@ -85,7 +85,6 @@ def stream(name, values, keys = []):
 def weights():
     return (
         topic("sensor-600194744352-weight")
-            .where("grams < 1335")
             .withColumn("grams", col("grams") - 1175)
             .where("grams > 0")
         )
@@ -96,7 +95,7 @@ def temperatures():
       if n == "6001947448b8-dht":
         return "lower shelf"
       elif n == "60019474508f-dht":
-        return "upper shelf"
+        return "chris"
       elif n == "40255102185161225227":
         return "ficus soil"
       elif n == "4025529137161225182":

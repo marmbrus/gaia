@@ -2,12 +2,17 @@ import json
 import logging
 import time
 from dateutil.parser import parse
+from datetime import datetime
 
 from subprocess import call
 from os.path import expanduser
 
 from confluent_kafka import Producer
 from confluent_kafka import Consumer, KafkaError, TopicPartition
+
+from kafka import KafkaConsumer
+
+import pytz
 
 config = {'bootstrap.servers': 'localhost'}
 logger = logging.getLogger("kafka")
@@ -34,10 +39,17 @@ def dump_topics(topics, maxage):
     c = Consumer({'bootstrap.servers': 'localhost',
                   'group.id': 'webrequest2',
                   'default.topic.config': {'auto.offset.reset': 'earliest'}})
+    c2 = KafkaConsumer()
+                  
     messages = {}
     noDedup = []
     for t in topics:
-        partitions = [TopicPartition(t, 0, -2)]
+        tp = TopicPartition(t, 0)
+        epoch_age = (maxage - datetime(1970,1,1).replace(tzinfo=pytz.utc)).total_seconds() * 1000
+        offsets = c2.offsets_for_times({tp: epoch_age})
+        offset = [v for v in offsets.values() if v][0][0]
+        logger.info("Skipping to {offset}".format(offset=offset))
+        partitions = [TopicPartition(t, 0, offset)]
         c.assign(partitions)
         running = True
         while running:

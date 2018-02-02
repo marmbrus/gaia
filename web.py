@@ -19,7 +19,7 @@ from flask import Response
 
 from flask_socketio import SocketIO
 
-from kafka import dump_topics, kafkaStore, poll_topic
+from kafka_lib import dump_topics, kafkaStore, poll_topic
 from sensors import c2f
 
 from sets import Set

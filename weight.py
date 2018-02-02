@@ -2,7 +2,7 @@ import serial
 import time
 
 from sensors import get_timestamp
-from kafka import kafkaStore
+from kafka_lib import kafkaStore
 
 ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
 
