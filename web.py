@@ -51,8 +51,8 @@ def index():
     for graph in graphs[:]:
         print(graph)
         windowed = graph.copy()
-        windowed["title"] = graph["title"] + " - 3 days"
-        windowed["age"] = "3 days"
+        windowed["title"] = graph["title"] + " - 5 days"
+        windowed["age"] = "5 days"
         windowed["data"] = [d + "-10min" for d in windowed["data"]]
         graphs.append(windowed)
         
