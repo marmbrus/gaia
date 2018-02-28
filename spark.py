@@ -1,5 +1,6 @@
 import os
 import time
+import json
 
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
@@ -14,7 +15,7 @@ spark = SparkSession\
     
 spark.sql("SET spark.sql.shuffle.partitions=1")
 
-def topic(t):
+def topic(t, batch = False):
     schema = (
         StructType() 
             .add("timestamp", StringType())
@@ -26,8 +27,15 @@ def topic(t):
             .add("lux", LongType())
             .add("raw", DoubleType())
             .add("stddev", DoubleType())
+            .add("tags", MapType(StringType(), StringType()))
         )
-    return (spark.readStream
+    reader = None
+    if batch:
+      reader = spark.read
+    else:
+      reader = spark.readStream
+    
+    return (reader
         .format("org.apache.spark.sql.kafka010.KafkaSourceProvider")
         .option("kafka.bootstrap.servers", "localhost:9092")
         .option("subscribe", t)
@@ -39,7 +47,8 @@ def topic(t):
         .withColumn("timestamp", to_timestamp(col("timestamp"), "yyyy-MM-dd HH:mm:ss"))
         .withWatermark("timestamp", "10 minutes")
     )
-    
+
+graphs = []    
 def stream(name, values, keys = []):
     def stream_dec(func):
         df = func()
@@ -82,59 +91,78 @@ def stream(name, values, keys = []):
           .outputMode("update") \
           .start()
         
+        for value in values:
+          graph = {
+            "title": name,
+            "data": [name],
+            "series": "sensor",
+            "x": "timestamp",
+            "y": value
+          }
+          graphs.append(graph)
+          
         return func
     return stream_dec
   
-@stream("calibration", keys=["sensor"], values=["grams", "stddev"])
-def calibration():
-    return (
-          topic("sensor-60019473da84-weight")
-            .union(topic("sensor-60019473e1bc-weight"))
-            .union(topic("sensor-600194744352-weight"))
-            .union(topic("sensor-68c63a9fb15c-weight"))
-            .where("grams < 10000 AND grams > -100")
-            .where("stddev < 10000")
-            .withColumn("sensor", substring(col("sensor"), 9, 4))
-        )
-        
-@stream("error", keys=["sensor"], values=["grams"])
+@stream("weights", keys=["sensor"], values=["grams", "stddev"])
 def weights():
     return (
-          calibration()
-            .withColumn("grams", when(col("grams") > 500, abs(col("grams") - 1000)).otherwise(abs(col("grams"))))
-            .where("grams < 500") # probably miscalibration at this point.
-        )
-        
-@stream("temperatures", keys = ["sensor"], values = ["temperature_f"])
-def temperatures():
-    def name(n):
-      if n == "6001947448b8-dht":
-        return "lower shelf"
-      elif n == "60019474508f-dht":
-        return "chris"
-      elif n == "40255102185161225227":
-        return "ficus soil"
-      elif n == "4025529137161225182":
-        return "rose soil"
-      elif n == "sht10":
-        return "room"
-      else:
-        return n
-  
-    return (
-        topic("sensor-40255102185161225227")
-          .union(topic("sensor-4025529137161225182"))
-          .union(topic("sensor-sht10"))
-          .union(topic("sensor-6001947448b8-dht"))
-          .union(topic("sensor-60019474508f-dht"))
-          .where("temperature_c != -999")
-          .withColumn("sensor", udf(name)(col("sensor")))
+          topic("readings")
+            .where("grams IS NOT NULL")
+            .where("stddev < 200")
+            .where("grams < 10000")
+            .where("grams > 200")
+            .withColumn("sensor", col("tags.plant"))
+            .where("NOT (sensor = 'ficus' AND grams > 1800)")
+            .where("NOT (sensor = 'plumeria' AND timestamp >= '2017-02-27')")
         )
 
-@stream("light", values=["lux"])
-def weights():
-    return (
-      topic("sensor-tsl2561")
+ranges = (
+  topic("weights", batch = True)
+    .groupBy("sensor")
+    .agg(min("grams").alias("min"), max("grams").alias("max"))
+)
+ranges.cache()
+
+@stream("water", keys=["sensor"], values=["water"])
+def water():
+  return (
+    weights()
+      .join(ranges, ["sensor"])
+      .withColumn("water", (col("grams") - col("min")))
     )
+    
+@stream("water_rel", keys=["sensor"], values=["water"])
+def water_rel():
+  return (
+    weights()
+      .join(ranges, ["sensor"])
+      .withColumn("water", (col("grams") - col("min")) / (col("max") - col("min")))
+    )
+  
+@stream("evaporation", keys=["sensor"], values=["ml_hour"])
+def water_rel():
+  spark.sql("SET spark.sql.streaming.unsupportedOperationCheck=false")
+  return (
+    weights()
+      .join(ranges, ["sensor"])
+      .groupBy(window("timestamp", "5 minutes").alias("timestamp").getField("end").alias("timestamp"), col("sensor"))
+      .agg(((min(struct("timestamp","grams")).getField("grams") - max(struct("timestamp", "grams")).getField("grams"))).alias("ml_hour"))
+      .where("ml_hour > 0")
+      .where("ml_hour < 30")
+    )
+  
+  
+@stream("temperatures", keys = ["sensor"], values = ["temperature_f"])
+def temperatures():
+    return (
+        topic("readings")
+          .where("temperature_c != -999")
+          .withColumn("sensor", col("tags.user"))
+        )
+
+print(graphs)
+with open('graphs.json', 'w') as fp:
+    json.dump(graphs, fp)
 
 spark.streams.awaitAnyTermination()

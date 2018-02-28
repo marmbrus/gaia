@@ -51,8 +51,8 @@ def index():
     for graph in graphs[:]:
         print(graph)
         windowed = graph.copy()
-        windowed["title"] = graph["title"] + " - 5 days"
-        windowed["age"] = "5 days"
+        windowed["title"] = graph["title"] + " - 10 days"
+        windowed["age"] = "10 days"
         windowed["data"] = [d + "-10min" for d in windowed["data"]]
         graphs.append(windowed)
         
@@ -78,6 +78,33 @@ def stream():
     data = dump_topics(topics, maxage)
     return jsonify(data)
 
+tags = {
+    "68c63a9fb15c": {
+        "user": "michael",
+        "plant": "ficus"
+    },
+    "60019473d8a7": {
+        "user": "michael",
+    },
+    "60019473e1bc": {
+        "user": "michael"
+    },
+    "60019474508f": {
+        "user": "chris"
+    },
+    "6001947450b7": {
+        "user": "brent"
+    },
+    "6001947448b8": {
+        "user": "michael",
+        "plant": "miltonia"
+    },
+    "60019473da84": {
+        "user": "michael",
+        "plant": "phal"
+    }
+}
+
 @app.route('/record', methods=['PUT'])
 def record():
     content = request.json
@@ -91,6 +118,10 @@ def record():
     content["sensor"] = content["sensor"].replace(":", "")
     if "temperature_c" in content:
         content["temperature_f"] = c2f(content["temperature_c"])
+    mac = content["sensor"][0:12]
+    print(mac)
+    if mac in tags:
+        content["tags"] = tags[mac]
     logger.info("PUT: {content}".format(content=content))
     kafkaStore.write([content])
     return "OK"

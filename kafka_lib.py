@@ -22,7 +22,7 @@ class KafkaStore:
     def write(self, data):
         p = Producer(config)
         for record in data:
-            p.produce("sensor-" + record["sensor"], json.dumps(record).encode('utf-8'))
+            p.produce("readings", json.dumps(record).encode('utf-8'))
         p.flush()
         
 kafkaStore = KafkaStore()
@@ -72,7 +72,7 @@ def dump_topics(topics, maxage):
     
 def poll_topic(socket, topics):
     c = Consumer({'bootstrap.servers': 'localhost',
-                  'group.id': 'webpoll2',
+                  'group.id': 'webpoll3',
                   'default.topic.config': {'auto.offset.reset': 'latest'}})
     c.subscribe(topics)
     while True:
