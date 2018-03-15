@@ -71,6 +71,15 @@ wifi.eventmon.register(wifi.eventmon.STA_CONNECTED, wifi_connect_event)
 wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, wifi_got_ip_event)
 wifi.eventmon.register(wifi.eventmon.STA_DISCONNECTED, wifi_disconnect_event)
 
-print("Connecting to WiFi access point...")
-wifi.setmode(wifi.STATION)
-wifi.sta.config({ssid=SSID, pwd=PASSWORD})
+print("Listing Available Access Points...")
+wifi.sta.getap(listap)
+-- Print AP list that is easier to read
+function listap(t) -- (SSID : Authmode, RSSI, BSSID, Channel)
+    for ssid,v in pairs(t) do
+      if credentials[ssid] ~= nil then
+        print("Connecting to WiFi access point...")
+        wifi.setmode(wifi.STATION)
+        wifi.sta.config({ssid=ssid, pwd=credentials[ssid]})
+      end
+    end
+end

@@ -4,8 +4,8 @@ local ow_pin = -1
 local dht_pin = -1
 local status_pin = 0
 
-local lux_sda =  -1 --2
-local lux_scl = -1 --3
+local lux_sda = -1 --6  --2
+local lux_scl = -1 -- 5 --3
 
 local color_sda = -1
 local color_scl = -1
@@ -148,7 +148,7 @@ end
 function conf_switch(pin, file_name)
   gpio.mode(pin, gpio.INPUT, gpio.PULLUP)
   gpio.trig(pin, "down", function () 
-    raw = raw_weight(10)
+    raw, stddev = raw_weight(10)
     print("Setting "..file_name.." to "..raw)
     
     f = file.open(file_name, "w")
@@ -230,9 +230,9 @@ function pulse()
 end
 
 -- file.remove("init.lua")
-
+cron.reset()
 -- cron.schedule("* * * * *", read_light)
--- cron.schedule("* * * * *", read_weight)
+cron.schedule("* * * * *", read_weight)
 -- cron.schedule("* * * * *", read_temp)
 -- cron.schedule("* * * * *", read)
 
