@@ -1,20 +1,20 @@
 dofile("version.lua")
 
 local ow_pin = -1
-local dht_pin = -1
+local dht_pin = 1 -- 1
 local status_pin = 0
 
-local lux_sda = -1 --6  --2
-local lux_scl = -1 -- 5 --3
+local lux_sda = 6  --2
+local lux_scl = 5 --3
 
 local color_sda = -1
 local color_scl = -1
 
-local weight_clk= 5
-local weight_dt= 6
+local weight_clk= -1 --5
+local weight_dt= -1 --6
 
-local tare_pin = 2
-local calibate_pin = 1
+local tare_pin = -1 --2
+local calibate_pin = -1 --1
 
 gpio.mode(status_pin, gpio.OUTPUT)
 gpio.write(status_pin, gpio.HIGH)
@@ -231,9 +231,9 @@ end
 
 -- file.remove("init.lua")
 cron.reset()
--- cron.schedule("* * * * *", read_light)
-cron.schedule("* * * * *", read_weight)
--- cron.schedule("* * * * *", read_temp)
+cron.schedule("* * * * *", read_light)
+-- cron.schedule("* * * * *", read_weight)
+cron.schedule("* * * * *", read_temp)
 -- cron.schedule("* * * * *", read)
 
 -- next_action = function()
